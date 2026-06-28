@@ -57,7 +57,7 @@ async function toPdf<T>(
   const doc = await createDocument();
   const { page } = doc.addPage();
 
-  let y = drawHeader(page, doc.fonts, {
+  const y = drawHeader(page, doc.fonts, {
     companyName: opts.companyName ?? opts.title ?? 'PayCore',
     title: opts.title ?? 'Export',
     subtitle: `${rows.length} record${rows.length === 1 ? '' : 's'}`,
