@@ -49,9 +49,9 @@ export const NAV: NavGroup[] = [
   {
     title: 'Payroll',
     items: [
-      { label: 'Payroll Runs', href: '/payroll', icon: Money, permission: 'payroll:view', soon: true },
+      { label: 'Payroll Runs', href: '/payroll', icon: Money, permission: 'payroll:view' },
       { label: 'Pay Heads', href: '/pay-heads', icon: Receipt, permission: 'payheads:view' },
-      { label: 'Payslips', href: '/payslips', icon: FileText, permission: 'payslips:view', soon: true },
+      { label: 'Payslips', href: '/payslips', icon: FileText, permission: 'payslips:view' },
     ],
   },
   {
