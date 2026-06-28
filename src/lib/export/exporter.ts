@@ -72,7 +72,7 @@ async function toPdf<T>(
   // drawTable paginates implicitly by stacking; for very large sets the body
   // may overflow a single page. We keep the core single-page render and leave
   // multi-page chunking to the report module which knows its row counts.
-  y = drawTable(page, doc.fonts, pdfColumns, tableRows, y);
+  drawTable(page, doc.fonts, pdfColumns, tableRows, y);
 
   drawFooter(
     page,
