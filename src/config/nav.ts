@@ -65,9 +65,9 @@ export const NAV: NavGroup[] = [
   {
     title: 'Finance & ESS',
     items: [
-      { label: 'Benefits', href: '/benefits', icon: HandCoins, permission: 'benefits:view', soon: true },
+      { label: 'Benefits', href: '/benefits', icon: HandCoins, permission: 'benefits:view' },
       { label: 'Finance', href: '/finance', icon: Bank, permission: 'finance:view' },
-      { label: 'Self-Service', href: '/ess', icon: UserCircle, permission: 'ess:view', soon: true },
+      { label: 'Self-Service', href: '/ess', icon: UserCircle, permission: 'ess:view' },
     ],
   },
   {
