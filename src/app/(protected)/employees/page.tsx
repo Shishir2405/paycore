@@ -1,15 +1,15 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, DotsThreeVertical, PencilSimple, Trash, DownloadSimple, UploadSimple, UsersThree } from '@phosphor-icons/react';
 import { useList } from '@/hooks/useList';
 import { useAuth } from '@/store/auth';
 import { employeesApi, type Employee } from '@/lib/api/employees';
 import { ApiError } from '@/lib/api/client';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { EmployeeFormModal } from '@/components/modules/employees/EmployeeFormModal';
 import { ImportModal } from '@/components/modules/employees/ImportModal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import {
   Badge,
   Button,
@@ -40,6 +40,7 @@ export default function EmployeesPage() {
 }
 
 function EmployeesView() {
+  const router = useRouter();
   const params = useSearchParams();
   const toast = useToast();
   const can = useAuth((s) => s.can);
@@ -51,26 +52,27 @@ function EmployeesView() {
     filters: { status: status || undefined },
   });
 
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<Employee | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [toDelete, setToDelete] = useState<Employee | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Dashboard "Add Employee" quick action deep-links here with ?new=1.
   useEffect(() => {
-    if (params.get('new') === '1' && can('employees:create')) {
-      setEditing(null);
-      setFormOpen(true);
-    }
-  }, [params, can]);
+    if (params.get('new') === '1' && can('employees:create')) router.replace('/employees/new');
+  }, [params, can, router]);
 
-  async function handleDelete(emp: Employee) {
-    if (!confirm(`Delete ${emp.fullName} (${emp.employeeCode})? This can be restored by an admin.`)) return;
+  async function confirmDelete() {
+    if (!toDelete) return;
+    setDeleting(true);
     try {
-      await employeesApi.remove(emp.id);
-      toast.success('Employee deleted');
+      await employeesApi.remove(toDelete.id);
+      toast.success('Employee deleted', `${toDelete.fullName} removed.`);
+      setToDelete(null);
       list.refetch();
     } catch (err) {
       toast.error('Delete failed', err instanceof ApiError ? err.message : undefined);
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -123,18 +125,12 @@ function EmployeesView() {
             }
           >
             {can('employees:edit') && (
-              <DropdownItem
-                icon={<PencilSimple size={16} />}
-                onClick={() => {
-                  setEditing(e);
-                  setFormOpen(true);
-                }}
-              >
+              <DropdownItem icon={<PencilSimple size={16} />} onClick={() => router.push(`/employees/${e.id}/edit`)}>
                 Edit
               </DropdownItem>
             )}
             {can('employees:delete') && (
-              <DropdownItem icon={<Trash size={16} />} danger onClick={() => handleDelete(e)}>
+              <DropdownItem icon={<Trash size={16} />} danger onClick={() => setToDelete(e)}>
                 Delete
               </DropdownItem>
             )}
@@ -150,13 +146,7 @@ function EmployeesView() {
         description="Manage your workforce master records."
         actions={
           can('employees:create') && (
-            <Button
-              icon={<Plus size={16} weight="bold" />}
-              onClick={() => {
-                setEditing(null);
-                setFormOpen(true);
-              }}
-            >
+            <Button icon={<Plus size={16} weight="bold" />} onClick={() => router.push('/employees/new')}>
               Add Employee
             </Button>
           )
@@ -222,13 +212,7 @@ function EmployeesView() {
             emptyDescription="Add your first employee or import from a spreadsheet."
             emptyAction={
               can('employees:create') && (
-                <Button
-                  icon={<UsersThree size={16} weight="fill" />}
-                  onClick={() => {
-                    setEditing(null);
-                    setFormOpen(true);
-                  }}
-                >
+                <Button icon={<UsersThree size={16} weight="fill" />} onClick={() => router.push('/employees/new')}>
                   Add Employee
                 </Button>
               )
@@ -239,13 +223,20 @@ function EmployeesView() {
         {list.meta && list.meta.total > 0 && <Pagination meta={list.meta} onPageChange={list.setPage} />}
       </div>
 
-      <EmployeeFormModal
-        open={formOpen}
-        employee={editing}
-        onClose={() => setFormOpen(false)}
-        onSaved={() => list.refetch()}
-      />
       <ImportModal open={importOpen} onClose={() => setImportOpen(false)} onImported={() => list.refetch()} />
+
+      <ConfirmDialog
+        open={!!toDelete}
+        onClose={() => setToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Delete employee?"
+        message={
+          toDelete ? `${toDelete.fullName} (${toDelete.employeeCode}) will be removed. An admin can restore it.` : undefined
+        }
+        confirmLabel="Delete"
+        danger
+        loading={deleting}
+      />
     </div>
   );
 }
